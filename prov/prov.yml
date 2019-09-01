@@ -1,0 +1,40 @@
+--- 
+- hosts: vyos_group
+  gather_facts: no
+  connection: ssh
+  become: no
+  tasks:
+  - name: Copy vpn secrets
+    copy:
+      src: /root/prov/config/user-data/
+      dest: /config/user-data/
+      remote_src: no
+      owner: vagrant
+      group: vyattacfg
+      mode: u=rwx,g=rwx,o=r
+  - name: Create ipsec directory
+    file: 
+      path: /config/ipsec.d/rsa-keys
+      state: directory
+      owner: vagrant
+      group: vyattacfg
+      recurse: yes
+  - name: create letsencryp directory
+    file:
+      path: /config/user-data/letsencrypt
+      state: directory
+      owner: vagrant
+      group: vyattacfg
+  - name: Copy localhost vpn key
+    copy:
+      src: /root/prov/config/localhost.key
+      dest: /config/ipsec.d/rsa-keys/localhost.key
+      owner: vagrant
+      group: vyattacfg
+  - name: Check if ca exists
+    stat: 
+      path: /config/user-data/letsencrypt/ca
+    register: file_dir
+  - name: Download CA and issue cert first time
+    shell: /config/user-data/createcert.sh
+    when: file_dir.stat.exists == false and file_dir.stat.isdir

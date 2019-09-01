@@ -1,0 +1,13 @@
+# This is the default ansible 'hosts' file.
+#
+# It should live in /etc/ansible/hosts
+#
+#   - Comments begin with the '#' character
+#   - one host in a container
+#   - You can enter hostnames or ip addresses
+#   - A hostname/ip can be a member of multiple groups
+[all:vars]
+ansible_user=vagrant
+ansible_connection=ssh
+[vyos_group]
+172.19.0.3 ansible_user=vagrant ansible_password=vagrant ansible_port=22

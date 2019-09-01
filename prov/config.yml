@@ -1,0 +1,15 @@
+- hosts: vyos_group
+  gather_facts: no
+  connection: network_cli
+  vars:
+    ansible_network_os: vyos
+  tasks:
+  - name: test commands
+    vyos_config:
+      lines:
+        - set system host-name peru-ipt-router
+  - name: load config
+    vyos_config:
+      src: /root/prov/config/peru.cfg
+      save: yes
+      backup: no

@@ -1,0 +1,69 @@
+version: '2'
+
+networks:
+  vyos_mgmt:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
+  vyos_nlan1:
+    driver: macvlan
+    driver_opts:
+      parent: eno1 # modify here your physical interface 
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24 # this IP will be used in the hypervisor, VyOS will be bridge to that.
+          gateway: 192.168.1.1
+  vyos_nlan2:
+     driver: macvlan
+     driver_opts:
+       parent: enx24f5a2f133df
+     ipam:
+      config:
+        - subnet: 192.168.8.0/24 # this IP will be used in the hypervisor, VyOS will be bridge to that.
+          gateway: 192.168.8.31  
+  vyos_nlan3:
+     driver: macvlan
+     driver_opts:
+       parent: enx24f5a2f13bd3
+     ipam:
+      config:
+        - subnet: 192.168.52.0/24 # this IP will be used in the hypervisor, VyOS will be bridge to that.
+          gateway: 192.168.52.31
+
+services:
+  vyosvm:
+    build: "./vyos"
+    restart: always
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+      - /dev/kvm
+    ports:
+#      - "1234:1234" # QEMU serial access if activated
+      - "2222:22" # SSH access, when VyOS has booted
+    volumes:
+      - "./vyos/startvm.sh:/root/startvm.sh"
+      - "./vyos/vyos.img:/root/vyos.img"
+      - "./vyos/prov/:/root/prov"
+    networks:
+      vyos_mgmt:
+        ipv4_address: 172.19.0.3
+      vyos_nlan1:
+        ipv4_address: 192.168.1.123
+      vyos_nlan2:
+        ipv4_address: 192.168.8.123
+      vyos_nlan3:
+        ipv4_address: 192.168.52.123
+  provisioner:
+    build: "./prov"
+    restart: always
+    volumes:
+      - "./prov/run.sh:/root/run.sh"
+      - "./prov/ansible.cfg:/etc/ansible/ansible.cfg"
+      - "./prov/:/root/prov"
+    networks:
+      vyos_mgmt:
+        ipv4_address: 172.19.0.2
